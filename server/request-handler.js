@@ -35,6 +35,8 @@ exports.requestHandler = function(request, response) {
   // The outgoing status.
   var statusCode = 200;
 
+  var responseData = ''; 
+
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
 
@@ -45,13 +47,22 @@ exports.requestHandler = function(request, response) {
   if(request.method === "GET"){
     response.end(JSON.stringify(data));
   } else if (request.method === "POST"){
+    //setting status to 201 to fulfill test req
     statusCode = 201;
-    response.end(data.results.push(JSON.parse(data)));
+    //make status code and headers
+    response.writeHead(statusCode, headers); 
+    // send back what the client sent to server 
+    response.on('data', function(chunk){
+        responseData += chunk;
+    });
+    response.on('end', function(){
+      console.log(responseData);
+        response.write('Request Completed!');
+        data.results.push(JSON.parse(responseData)); 
+        response.end(data.results);
+    });
   }
 
-  // } else {
-
-  // } 
 
 
 
@@ -69,7 +80,6 @@ exports.requestHandler = function(request, response) {
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
 
-  // response.end(responseData);
 };
 
 
