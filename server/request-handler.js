@@ -11,11 +11,12 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
-var data = {};
-data.results = []
 
-var exports = module.exports = {};
-exports.requestHandler = function(request, response) {
+var dataStorage = {};
+dataStorage.results = [];
+
+// var exports = module.exports = {};
+var handleRequest = function(request, response) {
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -33,44 +34,65 @@ exports.requestHandler = function(request, response) {
   console.log("Serving request type " + request.method + " for url " + request.url);
 
   // The outgoing status.
-  var statusCode = 200;
-
-  var responseData = ''; 
-
+  // var statusCode = null;
+  
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
+
 
   // Tell the client we are sending them plain text.
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
   if(request.method === "GET"){
-    response.end(JSON.stringify(data));
-  } else if (request.method === "POST"){
+    // if the requested url does exist in the server
+    if(request.url !== '/arglebargle'){
+      // console.log("get", );
+      statusCode = 200;
+      // console.log(JSON.stringify(data))
+      // response.writeHead(statusCode, headers);
+      // response.end(JSON.stringify(data));
+    } else {
+      statusCode = 404;
+      // response.writeHead(statusCode, headers);
+      // response.end(JSON.stringify(data));
+    }
+  } 
+
+  if(request.method === "POST"){
     //setting status to 201 to fulfill test req
-    statusCode = 201;
+      statusCode = 201;
+      // var responseData = ''; 
     //make status code and headers
-    response.writeHead(statusCode, headers); 
-    // send back what the client sent to server 
-    response.on('data', function(chunk){
-        responseData += chunk;
-    });
-    response.on('end', function(){
-      console.log(responseData);
-        response.write('Request Completed!');
-        data.results.push(JSON.parse(responseData)); 
-        response.end(data.results);
-    });
+      // response.writeHead(statusCode, headers); 
+    request.on('data', function (chunk) {
+      // response.on('data', function (chunk) {
+      //   responseData += chunk;
+      // });
+      // response.on('end', function () {
+        // var parsedData = JSON.parse(responseData);
+        // console.log(parsedData)
+        dataStorage.results.push(JSON.parse(chunk));
+      });
+    // });
   }
 
 
 
 
-  headers['Content-Type', statusCode] = "text/plain";
+  //  else {
+  //   statusCode = 404;
+  //   request.writeHead(statusCode, headers);
+  //   response.end(statusCode);
+  // }
+
+  response.writeHead(statusCode, headers);
+
+
+  headers['Content-Type', statusCode] = "application/json";
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -79,6 +101,9 @@ exports.requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
+
+  response.end(JSON.stringify(dataStorage));
+
 
 };
 
@@ -99,3 +124,4 @@ var defaultCorsHeaders = {
   "access-control-max-age": 10 // Seconds.
 };
 
+module.exports = handleRequest;
